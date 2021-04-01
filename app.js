@@ -6,7 +6,7 @@ const util = require('util')
 const ngrok = require('ngrok')
 
 const PORT = 4040
-const CONVERSATION_API_BASE = 'https://driftapi.com/v1/conversations'
+const CONVERSATION_API_BASE = 'https://driftapi.com/conversations'
 const TOKEN = process.env.AUTH_TOKEN // only necessary if you're sending data back to the APIs
 
 app.use(bodyParser.json())
@@ -20,10 +20,12 @@ ngrok.connect(PORT).then(url => console.log(`External Forwarding URL is: ${url}/
 app.post('/api', (req, res) => {
 
     // pull out the JSON message
-    const body = req.body.data.data.conversationId
+    const conversationId = req.body.data.data.conversationId
+
 
     // log the response, use the util function to parse all the way into the object
-    console.log(util.inspect(body, {showHidden: false, depth: null}))
+    console.log(util.inspect(conversationId, {showHidden: false, depth: null}))
+    console.log(getConversation(conversationId))
 
     // end the connection with a positive response
     res.status(200)
@@ -31,18 +33,12 @@ app.post('/api', (req, res) => {
 })
 
 // HELPER functions
-// send a message back to the conversation
-const sendMessage = (conversationId, message) => {
-    console.log('sending message', message)
-    return request.post(CONVERSATION_API_BASE + `/${conversationId}/messages`)
-        .set('Content-Type', 'application/json')
-        .set(`Authorization`, `bearer ${TOKEN}`)
-        .send(message)
-        .catch(err => console.log(err))
-}
 
 // look up meta data about this conversation
-const lookUpConversation = convoId => {
-    return request.get('https://driftapi.com/conversations/' + convoId)
+const getConversation = (conversationId) => {
+    console.log("Retrieving conversation")
+    return request.get(CONVERSATION_API_BASE + `/${conversationId}`)
+        .set('Content-type', 'application/json')
         .set(`Authorization`, `bearer ${TOKEN}`)
+        .catch(err => console.log(err))
 }
